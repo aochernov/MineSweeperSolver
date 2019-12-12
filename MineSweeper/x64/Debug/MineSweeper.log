@@ -1,0 +1,2 @@
+﻿  MineSweeper.cpp
+c:\users\andrew\vsprojects\minesweepersolver\minesweeper\minesweeper.cpp(222): fatal error C1010: непредвиденный конец файла во время поиска предкомпилированного заголовка. Возможно, вы забыли добавить директиву "#include "pch.h"" в источник.
