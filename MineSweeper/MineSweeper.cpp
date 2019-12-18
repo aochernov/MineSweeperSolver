@@ -1,8 +1,7 @@
 ﻿#include <iostream>
 #include <fstream>
-#include <string>
-#include <vector>
 #include <algorithm>
+#include "SAT.h"
 
 std::vector<std::vector<int>> parseFile(std::string name)
 {
@@ -63,160 +62,82 @@ void printMap(std::vector<std::vector<int>> map)
 	std::cout << "\n";
 }
 
-void countNeighbours(int i, int j, std::vector<std::vector<int>> map, int &mines, int &undefined)
+PropositionalFormula* cellConsistencyFormula(std::vector<std::string> &neighbours, int value)
 {
-	mines = 0;
-	undefined = 0;
-	for (int y = i - 1; y <= i + 1; y++)
+	std::vector<bool> permutation = { false, false, false, false, false, false, false, false };
+	for (int i = 0; i < value; i++)
 	{
-		for (int x = j - 1; x <= j + 1; x++)
-		{
-			if (map[y][x] == -1)
-			{
-				undefined++;
-			}
-			else if (map[y][x] == 9)
-			{
-				mines++;
-			}
-		}
+		permutation[7 - i] = true;
 	}
+	PropositionalOr* disjunction = new PropositionalOr();
+	do {
+		PropositionalAnd* conjunction = new PropositionalAnd();
+		for (int i = 0; i < 8; i++)
+		{
+			conjunction->addConjunct(new PropositionalFormula(permutation[i], neighbours[i]));
+		}
+		disjunction->addDisjunct(conjunction);
+	} while (std::next_permutation(permutation.begin(), permutation.end()));
+	return disjunction;
 }
 
-bool consistencyCheck(std::vector<std::vector<int>> map)
+PropositionalFormula* getFormula(std::vector<std::vector<int>> &map)
 {
-	for (int i = 0; i < map.size(); i++)
+	PropositionalAnd* conjunction = new PropositionalAnd();
+	for (int i = 1; i <= 5; i++)
 	{
-		for (int j = 0; j < map[i].size(); j++)
+		for (int j = 1; j <= 5; j++)
 		{
-			if ((map[i][j] >= 0) && (map[i][j] <= 8))
+			if (map[i][j] >= 0 && map[i][j] <= 8)
 			{
-				std::vector<std::vector<int>> window;
+				std::vector<std::string> neighbours;
 				for (int y = i - 1; y <= i + 1; y++)
 				{
-					std::vector<int> line;
-					if ((y < 0) || (y >= map.size()))
+					for (int x = j - 1; x <= j + 1; x++)
 					{
-						for (int k = 0; k < 3; k++)
+						if ((y == i) && (x == j))
 						{
-							line.push_back(-2);
+							continue;
+						}
+						else if (map[y][x] > 100)
+						{
+							neighbours.push_back("x" + std::to_string(map[y][x] % 100));
+						}
+						else if (map[y][x] == 9)
+						{
+							neighbours.push_back("1");
+						}
+						else
+						{
+							neighbours.push_back("0");
 						}
 					}
-					else
-					{
-						for (int x = j - 1; x <= j + 1; x++)
-						{
-							if ((x < 0) || (x >= map[i].size()))
-							{
-								line.push_back(-2);
-							}
-							else
-							{
-								line.push_back(map[y][x]);
-							}
-						}
-					}
-					window.push_back(line);
 				}
-				int mines, undefined;
-				countNeighbours(1, 1, window, mines, undefined);
-				if (mines > map[i][j])
-				{
-					return false;
-				}
-				else if ((mines + undefined) < map[i][j])
-				{
-					return false;
-				}
+				conjunction->addConjunct(cellConsistencyFormula(neighbours, map[i][j]));
 			}
 		}
 	}
-	return true;
-}
-
-bool countCheck(std::vector<std::vector<int>> map)
-{
-	int mines = 0;
-	for (int i = 0; i < 3; i++)
-	{
-		for (int j = 0; j < 3; j++)
-		{
-			if (map[i][j] == 9)
-			{
-				mines++;
-			}
-		}
-	}
-	return (mines == map[1][1]);
-}
-
-bool canBeSolved(std::vector<std::vector<int>> map, int vars)
-{
-	if (vars != 0)
-	{
-		for (int i = 0; i < 7; i++)
-		{
-			for (int j = 0; j < 7; j++)
-			{
-				if (map[i][j] == -1)
-				{
-					map[i][j] = 9;
-					if (canBeSolved(map, vars - 1))
-					{
-						return true;
-					}
-					map[i][j] = 10;
-					return canBeSolved(map, vars - 1);
-				}
-			}
-		}
-	}
-	else
-	{
-		for (int i = 1; i <= 5; i++)
-		{
-			for (int j = 1; j <= 5; j++)
-			{
-				if (map[i][j] != 9 && map[i][j] != -2 && map[i][j] != 10)
-				{
-					std::vector<std::vector<int>> window;
-					for (int y = i - 1; y <= i + 1; y++)
-					{
-						std::vector<int> line;
-						for (int x = j - 1; x <= j + 1; x++)
-						{
-							line.push_back(map[y][x]);
-						}
-						window.push_back(line);
-					}
-					if (!countCheck(window))
-					{
-						return false;
-					}
-				}
-			}
-		}
-		return true;
-	}
+	return conjunction;
 }
 
 int cellCheck(std::vector<std::vector<int>> map)
 {
-	int undefined = -1;
+	map[3][3] = 9;
+	int variable = 101;
 	for (int i = 0; i < 7; i++)
 	{
 		for (int j = 0; j < 7; j++)
 		{
 			if (map[i][j] == -1)
 			{
-				undefined++;
+				map[i][j] = variable;
+				variable++;
 			}
 		}
 	}
-	map[3][3] = 9;
-	bool canBeMine = canBeSolved(map, undefined);
+	bool canBeMine = SAT(getFormula(map)->getSimplified()).solve();
 	map[3][3] = 10;
-	bool canBeEmpty = canBeSolved(map, undefined);
+	bool canBeEmpty = SAT(getFormula(map)->getSimplified()).solve();
 	if (canBeEmpty && !canBeMine)
 	{
 		return 10;
@@ -235,9 +156,9 @@ int cellCheck(std::vector<std::vector<int>> map)
 	}
 }
 
-bool singleRun(std::vector<std::vector<int>> &map, bool &inconsistent)
+bool singleRun(std::vector<std::vector<int>> &map, bool &isConsistent)
 {
-	inconsistent = false;
+	isConsistent = true;
 	bool updated = false;
 	for (int i = 0; i < map.size(); i++)
 	{
@@ -275,7 +196,7 @@ bool singleRun(std::vector<std::vector<int>> &map, bool &inconsistent)
 				map[i][j] = cellCheck(window);
 				if (map[i][j] == -3)
 				{
-					inconsistent = true;
+					isConsistent = false;
 					return false;
 				}
 				else if (map[i][j] != -1)
@@ -288,23 +209,65 @@ bool singleRun(std::vector<std::vector<int>> &map, bool &inconsistent)
 	return updated;
 }
 
+bool consistencyCheck(std::vector<std::vector<int>> map)
+{
+	for (int i = 0; i < map.size(); i++)
+	{
+		for (int j = 0; j < map[i].size(); j++)
+		{
+			if ((map[i][j] >= 0) && (map[i][j] <= 8))
+			{
+				int counter = 1;
+				std::vector<std::string> neighbours;
+				for (int y = i - 1; y <= i + 1; y++)
+				{
+					for (int x = j - 1; x <= j + 1; x++)
+					{
+						if ((y == i) && (x == j))
+						{
+							continue;
+						}
+						else if ((y < 0) || (x < 0) || (y > map.size()) || (x > map[i].size()))
+						{
+							neighbours.push_back("0");
+						}
+						else if (map[y][x] == -1)
+						{
+							neighbours.push_back("x" + std::to_string(counter));
+							counter++;
+						}
+						else if (map[y][x] == 9)
+						{
+							neighbours.push_back("1");
+						}
+						else
+						{
+							neighbours.push_back("0");
+						}
+					}
+				}
+				if (!SAT(cellConsistencyFormula(neighbours, map[i][j])->getSimplified()).solve())
+				{
+					return false;
+				}
+			}
+		}
+	}
+	return true;
+}
+
 int main(int argc, char *argv[])
 {
 	std::vector<std::vector<int>> map = parseFile(argv[1]);
 	printMap(map);
-	if (!consistencyCheck(map))
+	bool isConsistent = consistencyCheck(map);
+	while (isConsistent && singleRun(map, isConsistent));
+	if (isConsistent)
 	{
-		std::cout << "Map is inconsistent\n";
-		return 0;
-	}
-	bool inconsistency;
-	while (singleRun(map, inconsistency));
-	if (inconsistency)
-	{
-		std::cout << "Map is inconsistent\n";
+		printMap(map);
 	}
 	else
 	{
-		printMap(map);
+		std::cout << "Map is inconsistent\n";
 	}
 }

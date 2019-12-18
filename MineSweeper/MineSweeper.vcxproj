@@ -152,6 +152,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="MineSweeper.cpp" />
+    <ClCompile Include="PropositionalFormula.cpp" />
+    <ClCompile Include="SAT.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="PropositionalFormula.h" />
+    <ClInclude Include="SAT.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
