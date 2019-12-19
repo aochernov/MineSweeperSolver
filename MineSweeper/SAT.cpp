@@ -11,38 +11,38 @@ SAT::SAT(PropositionalFormula* formula)
 
 void SAT::tseytinTransform(PropositionalFormula* formula)
 {
-	int newVariable = 1;
+	PropositionalFormula::resetNameCounter();
 	std::vector<PropositionalFormula*> children = {formula};
-	CNF = { {formula->getAlias(newVariable, formula->getSign())} };
+	CNF = { {formula->getAlias(formula->getSign())} };
 	while (children.size())
 	{
 		PropositionalFormula* child = children[0];
 		children.erase(children.begin());
 		switch (child->getType())
 		{
-		case 1: //AND
+		case PropositionalFormula::AND:
 		{
-			std::string commonDisjunct = child->getAlias(newVariable, false);
-			std::vector<std::string> longDisjunction = {child->getAlias(newVariable, true)};
+			std::string commonDisjunct = child->getAlias(false);
+			std::vector<std::string> longDisjunction = {child->getAlias(true)};
 			std::vector<PropositionalFormula*> nextChildren = child->getChildren();
 			for (PropositionalFormula* ch : nextChildren)
 			{
-				longDisjunction.push_back(ch->getAlias(newVariable, !ch->getSign()));
-				CNF.push_back({commonDisjunct, ch->getAlias(newVariable, ch->getSign())});
+				longDisjunction.push_back(ch->getAlias(!ch->getSign()));
+				CNF.push_back({commonDisjunct, ch->getAlias(ch->getSign())});
 			}
 			CNF.push_back(longDisjunction);
 			children.insert(children.end(), nextChildren.begin(), nextChildren.end());
 			break;
 		}
-		case 2: //OR
+		case PropositionalFormula::OR:
 		{
-			std::string commonDisjunct = child->getAlias(newVariable, true);
-			std::vector<std::string> longDisjunction = { child->getAlias(newVariable, false) };
+			std::string commonDisjunct = child->getAlias(true);
+			std::vector<std::string> longDisjunction = { child->getAlias(false) };
 			std::vector<PropositionalFormula*> nextChildren = child->getChildren();
 			for (PropositionalFormula* ch : nextChildren)
 			{
-				longDisjunction.push_back(ch->getAlias(newVariable, ch->getSign()));
-				CNF.push_back({commonDisjunct, ch->getAlias(newVariable, !ch->getSign())});
+				longDisjunction.push_back(ch->getAlias(ch->getSign()));
+				CNF.push_back({commonDisjunct, ch->getAlias(!ch->getSign())});
 			}
 			CNF.push_back(longDisjunction);
 			children.insert(children.end(), nextChildren.begin(), nextChildren.end());

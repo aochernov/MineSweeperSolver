@@ -4,63 +4,54 @@
 
 class PropositionalFormula //Variables
 {
+public:
+	enum FormulaType { VARIABLE, OR, AND };
+
 protected:
 	bool Sign;
 	std::string Name;
+	FormulaType Type;
+	static int NameCounter;
 
 public:
 	PropositionalFormula(bool sign, std::string name);
 	void negate();
 	bool getSign();
+	FormulaType getType();
+	std::string getAlias(bool sign);
 	virtual int getValue();
 	virtual std::string getFormula();
 	virtual PropositionalFormula* getSimplified();
 	virtual std::vector<PropositionalFormula*> getChildren();
-	virtual std::string getAlias(int &newValue, bool sign);
-	virtual int getType()
-	{
-		return 0;
-	}
+	static void resetNameCounter();
 };
 
 class PropositionalAnd : public PropositionalFormula
 {
 private:
 	bool Defined;
-	std::string Alias;
 	std::vector<PropositionalFormula*> Conjuncts;
 
 public:
-	PropositionalAnd();
+	PropositionalAnd(bool sign = true);
 	void addConjunct(PropositionalFormula* conjunct);
 	virtual int getValue() override;
 	virtual std::string getFormula() override;
 	virtual PropositionalFormula* getSimplified() override;
 	virtual std::vector<PropositionalFormula*> getChildren() override;
-	virtual std::string getAlias(int &newValue, bool sign) override;
-	virtual int getType() override
-	{
-		return 1;
-	}
 };
 
 class PropositionalOr : public PropositionalFormula
 {
 private:
 	bool Defined;
-	std::string Alias;
 	std::vector<PropositionalFormula*> Disjuncts;
 
 public:
-	PropositionalOr();
+	PropositionalOr(bool sign = true);
 	void addDisjunct(PropositionalFormula* disjunct);
 	virtual int getValue() override;
 	virtual std::string getFormula() override;
 	virtual PropositionalFormula* getSimplified() override;
 	virtual std::vector<PropositionalFormula*> getChildren() override;
-	virtual std::string getAlias(int &newValue, bool sign) override;
-	virtual int getType() override
-	{
-		return 2;
-	}
 };

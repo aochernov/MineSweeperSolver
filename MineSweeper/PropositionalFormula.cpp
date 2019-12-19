@@ -1,7 +1,10 @@
 #include "PropositionalFormula.h"
 
+int PropositionalFormula::NameCounter;
+
 PropositionalFormula::PropositionalFormula(bool sign, std::string name)
 {
+	Type = VARIABLE;
 	Sign = sign;
 	if (name == "0")
 	{
@@ -21,6 +24,11 @@ PropositionalFormula::PropositionalFormula(bool sign, std::string name)
 void PropositionalFormula::negate()
 {
 	Sign = !Sign;
+}
+
+PropositionalFormula::FormulaType PropositionalFormula::getType()
+{
+	return Type;
 }
 
 bool PropositionalFormula::getSign()
@@ -63,14 +71,32 @@ std::vector<PropositionalFormula*> PropositionalFormula::getChildren()
 	return { this };
 }
 
-std::string PropositionalFormula::getAlias(int &newValue, bool sign)
+std::string PropositionalFormula::getAlias(bool sign)
 {
+	if (Name.empty())
+	{
+		if (getType() == VARIABLE)
+		{
+			return std::to_string(sign ? Sign : !Sign);
+		}
+		else
+		{
+			Name = "t" + std::to_string(NameCounter);
+			NameCounter++;
+		}
+	}
 	return (sign ? Name : ("!" + Name));
 }
 
-PropositionalAnd::PropositionalAnd() : PropositionalFormula(true, "1")
+void PropositionalFormula::resetNameCounter()
+{
+	NameCounter = 1;
+}
+
+PropositionalAnd::PropositionalAnd(bool sign) : PropositionalFormula(sign, "1")
 {
 	Defined = false;
+	Type = AND;
 }
 
 void PropositionalAnd::addConjunct(PropositionalFormula* conjunct)
@@ -151,19 +177,10 @@ std::vector<PropositionalFormula*> PropositionalAnd::getChildren()
 	return Conjuncts;
 }
 
-std::string PropositionalAnd::getAlias(int &newValue, bool sign)
-{
-	if (Alias.empty())
-	{
-		Alias = "t" + std::to_string(newValue);
-		newValue++;
-	}
-	return (sign ? Alias : ("!" + Alias));
-}
-
-PropositionalOr::PropositionalOr() : PropositionalFormula(true, "1")
+PropositionalOr::PropositionalOr(bool sign) : PropositionalFormula(sign, "1")
 {
 	Defined = false;
+	Type = OR;
 }
 
 void PropositionalOr::addDisjunct(PropositionalFormula* disjunct)
@@ -242,14 +259,4 @@ PropositionalFormula* PropositionalOr::getSimplified()
 std::vector<PropositionalFormula*> PropositionalOr::getChildren()
 {
 	return Disjuncts;
-}
-
-std::string PropositionalOr::getAlias(int &newValue, bool sign)
-{
-	if (Alias.empty())
-	{
-		Alias = "t" + std::to_string(newValue);
-		newValue++;
-	}
-	return (sign ? Alias : ("!" + Alias));
 }
